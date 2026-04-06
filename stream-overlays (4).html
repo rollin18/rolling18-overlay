@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rollin' 18</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Rajdhani:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: transparent;
+    font-family: 'Rajdhani', sans-serif;
+    position: relative;
+  }
+
+  :root {
+    --accent: #ff6a00;
+    --dark: rgba(10, 8, 6, 0.55);
+    --dark-solid: rgba(12,9,6,0.70);
+    --text: #ffffff;
+    --text-dim: rgba(255,255,255,0.65);
+  }
+
+  /* MAP top right */
+  #map-panel {
+    position: absolute; top: 0; right: 0;
+    width: 380px; height: 280px;
+    background: var(--dark);
+    border-left: 3px solid var(--accent);
+    border-bottom: 3px solid var(--accent);
+    border-bottom-left-radius: 48px;
+    overflow: hidden;
+  }
+  .map-header {
+    position: absolute; top: 0; left: 0; right: 0; height: 30px;
+    background: var(--dark-solid);
+    border-bottom: 1px solid rgba(255,106,0,0.3);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 12px; z-index: 10;
+  }
+  .map-title { font-size:11px; font-weight:700; letter-spacing:0.2em; color:var(--accent); text-transform:uppercase; }
+  .map-timer-wrap { display:flex; align-items:center; gap:6px; }
+  .map-timer-label { font-size:11px; color:var(--text-dim); }
+  .timer-ring { width:18px; height:18px; }
+  .timer-ring circle { fill:none; stroke:rgba(255,106,0,0.2); stroke-width:3; }
+  .timer-ring .progress {
+    stroke:var(--accent); stroke-dasharray:44; stroke-dashoffset:0;
+    stroke-linecap:round; transform:rotate(-90deg); transform-origin:center;
+    transition:stroke-dashoffset 1s linear;
+  }
+  .map-content {
+    position:absolute; top:30px; left:0; right:0; bottom:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .map-content iframe { width:100%; height:100%; border:none; pointer-events:none; }
+  .map-placeholder { color:rgba(255,106,0,0.4); font-size:12px; letter-spacing:0.15em; }
+  .nesw {
+    position:absolute; z-index:10; font-size:11px; font-weight:700; color:var(--accent);
+    pointer-events:none; text-shadow:0 1px 5px rgba(0,0,0,0.95);
+  }
+  .nesw.n { top:34px; left:50%; transform:translateX(-50%); }
+  .nesw.s { bottom:4px; left:50%; transform:translateX(-50%); }
+  .nesw.e { right:5px; top:50%; transform:translateY(-50%); margin-top:15px; }
+  .nesw.w { left:5px; top:50%; transform:translateY(-50%); margin-top:15px; }
+
+  /* CLOCK top left */
+  #clock-block {
+    position:absolute; top:0; left:0;
+    background:var(--dark);
+    border-right:3px solid var(--accent);
+    border-bottom:3px solid var(--accent);
+    border-bottom-right-radius:48px;
+    padding:12px 32px 14px 18px; min-width:240px;
+  }
+  #clock-time { font-family:'Bebas Neue',sans-serif; font-size:64px; color:var(--text); line-height:0.95; letter-spacing:0.05em; font-variant-numeric:tabular-nums; }
+  #clock-date { font-size:14px; font-weight:600; color:var(--text); letter-spacing:0.2em; text-transform:uppercase; margin-top:5px; }
+  #clock-tz   { font-size:11px; color:var(--text-dim); letter-spacing:0.15em; text-transform:uppercase; }
+
+  /* BOTTOM BAR */
+  #bottom-bar {
+    position:absolute; bottom:0; left:0; right:0; height:95px;
+    background:rgba(10,8,6,0.82);
+    border-top:3px solid var(--accent);
+    display:flex; align-items:stretch; overflow:hidden;
+  }
+  #bottom-bar::before {
+    content:''; position:absolute; left:0; top:0; bottom:0; width:5px;
+    background:var(--accent);
+  }
+  .bar-col {
+    flex:1; display:flex; flex-direction:column;
+    justify-content:center; padding:0 22px;
+    border-right:1px solid rgba(255,255,255,0.15); position:relative; z-index:2;
+  }
+  .bar-col:last-child { border-right:none; }
+  .bar-label { font-size:10px; font-weight:600; letter-spacing:0.22em; color:var(--text-dim); text-transform:uppercase; margin-bottom:1px; }
+  .bar-val { font-family:'Bebas Neue',sans-serif; font-size:34px; color:var(--text); line-height:1; font-variant-numeric:tabular-nums; }
+  .loc-dot {
+    display:inline-block; width:8px; height:8px; border-radius:50%;
+    background:var(--accent); margin-right:8px; vertical-align:middle;
+    animation:pulse-dot 2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* BRANDING */
+  #brand-shadow-box {
+    padding:4px 14px 6px 14px; border-radius:6px;
+    background:rgba(0,0,0,0.50); border:2px solid var(--accent);
+    box-shadow:0 0 14px rgba(255,106,0,0.4); display:inline-block;
+  }
+  #brand-name {
+    font-family:'Pacifico',cursive; font-size:46px; color:var(--accent);
+    letter-spacing:0.02em; line-height:1;
+    text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000,0 0 16px rgba(255,106,0,0.7);
+  }
+  #brand-tagline { font-size:11px; font-weight:600; letter-spacing:0.35em; color:#f5c518; text-transform:uppercase; margin-top:2px; text-align:center; opacity:0.8; }
+
+  /* GPS PROMPT */
+  #gps-prompt {
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:20px; padding:40px;
+    text-align:center; background:rgba(0,0,0,0.95); z-index:9999;
+  }
+  #gps-prompt h2 { font-family:'Pacifico',cursive; font-size:72px; color:var(--accent); text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000; }
+  #gps-prompt p  { font-family:'Rajdhani',sans-serif; font-size:20px; color:var(--text-dim); max-width:380px; line-height:1.7; }
+  #gps-prompt button {
+    background:var(--accent); color:#000; border:none; border-radius:5px;
+    padding:18px 52px; font-family:'Bebas Neue',sans-serif;
+    font-size:32px; letter-spacing:0.14em; cursor:pointer;
+  }
+  #gps-prompt.hidden { display:none; }
+
+  @keyframes mapFade { from{opacity:0} to{opacity:1} }
+  .map-fading { animation:mapFade 0.7s ease both; }
+</style>
+</head>
+<body>
+
+<!-- GPS Prompt -->
+<div id="gps-prompt">
+  <h2>Rollin' 18</h2>
+  <p>Tap below then tap <strong style="color:#fff">Allow</strong> when iOS asks for location.</p>
+  <button id="start-btn">ENABLE GPS</button>
+</div>
+
+<!-- Top Left: Clock -->
+<div id="clock-block">
+  <div id="clock-time">--:-- --</div>
+  <div id="clock-date">-- --- ----</div>
+  <div id="clock-tz">--</div>
+</div>
+
+<!-- Top Right: Map -->
+<div id="map-panel">
+  <div class="map-header">
+    <span class="map-title" id="map-title">Awaiting GPS...</span>
+    <div class="map-timer-wrap">
+      <span class="map-timer-label" id="timer-label">--s</span>
+      <svg class="timer-ring" viewBox="0 0 18 18">
+        <circle cx="9" cy="9" r="7"/>
+        <circle class="progress" id="timer-progress" cx="9" cy="9" r="7"/>
+      </svg>
+    </div>
+  </div>
+  <div class="map-content" id="map-content">
+    <div class="map-placeholder">AWAITING GPS...</div>
+  </div>
+  <span class="nesw n">N</span>
+  <span class="nesw s">S</span>
+  <span class="nesw e">E</span>
+  <span class="nesw w">W</span>
+</div>
+
+<!-- Bottom Bar -->
+<div id="bottom-bar">
+  <!-- Temp far left -->
+  <div class="bar-col" style="flex:1.2;padding:0 18px;">
+    <div class="bar-label">Temp <span id="dot-temp" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#333;vertical-align:middle;margin-left:4px"></span></div>
+    <div class="bar-val" style="font-size:28px">
+      <span id="val-temp-f">--</span><span style="font-size:12px;color:var(--text-dim);margin-left:2px">°F</span>
+      <span style="font-size:14px;color:var(--text-dim);margin:0 4px">/</span>
+      <span id="val-temp-c">--</span><span style="font-size:12px;color:var(--text-dim);margin-left:2px">°C</span>
+    </div>
+  </div>
+  <!-- Street + Location centered -->
+  <div style="flex:4;display:flex;align-items:center;justify-content:center;border-left:1px solid rgba(255,255,255,0.15);border-right:1px solid rgba(255,255,255,0.15);position:relative;z-index:2;">
+    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 20px;border-right:1px solid rgba(255,255,255,0.1);">
+      <div class="bar-label">Street</div>
+      <div class="bar-val" id="val-street">Locating...</div>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 20px;">
+      <div class="bar-label">Location</div>
+      <div class="bar-val"><span class="loc-dot"></span><span id="val-city">--</span></div>
+    </div>
+  </div>
+  <!-- Rollin' 18 far right -->
+  <div class="bar-col" style="align-items:flex-end;padding-right:24px;flex:1.4">
+    <div id="brand-shadow-box">
+      <div id="brand-name">Rollin' 18</div>
+      <div id="brand-tagline">Live on the Road</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Scale to fit
+  function scale() {
+    var s = Math.min(window.innerWidth/1920, window.innerHeight/1080);
+    document.body.style.transform = 'scale('+s+')';
+    document.body.style.transformOrigin = 'top left';
+    document.body.style.width  = '1920px';
+    document.body.style.height = '1080px';
+    var p = document.getElementById('gps-prompt');
+    if (p && !p.classList.contains('hidden')) {
+      p.style.width  = Math.round(window.innerWidth/s)+'px';
+      p.style.height = Math.round(window.innerHeight/s)+'px';
+    }
+  }
+  scale();
+  window.addEventListener('resize', scale);
+
+  // State
+  var lat=null, lon=null, isMoving=false, mapStarted=false;
+  var mapIndex=0, mapCountdown=0, mapInterval=null;
+  var stoppedIndex=0, stoppedCountdown=0, stoppedInterval=null;
+  var lastTemp=0, lastGeo=0, lastTz=0;
+  var CIRC = 2*Math.PI*7;
+  var userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  var MAP_MOVE = [
+    {name:'USA View',   span:28.0,  dur:7 },
+    {name:'State View', span:1.8,   dur:10},
+    {name:'Street View',span:0.003, dur:15}
+  ];
+  var MAP_STOP = [
+    {name:'USA View',   span:28.0, dur:7 },
+    {name:'State View', span:1.8,  dur:10}
+  ];
+
+  // Clock
+  function tick() {
+    var now  = new Date();
+    var opts = {hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true,timeZone:userTZ};
+    var pts  = Intl.DateTimeFormat('en-US',opts).formatToParts(now);
+    var get  = function(t){ return (pts.find(function(p){return p.type===t;})||{}).value||'--'; };
+    var ap   = (pts.find(function(p){return p.type==='dayperiod'||p.type==='dayPeriod';})||{}).value||'';
+    document.getElementById('clock-time').textContent = get('hour')+':'+get('minute')+':'+get('second')+' '+ap;
+    var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var d = new Date(now.toLocaleString('en-US',{timeZone:userTZ}));
+    document.getElementById('clock-date').textContent = days[d.getDay()]+'  ·  '+mons[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
+    var tz = (Intl.DateTimeFormat('en-US',{timeZoneName:'short',timeZone:userTZ}).formatToParts(now).find(function(p){return p.type==='timeZoneName';})||{}).value||'';
+    document.getElementById('clock-tz').textContent = tz;
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // Map
+  function renderMap(lt, ln, v) {
+    var url = 'https://www.openstreetmap.org/export/embed.html?bbox='+(ln-v.span)+','+(lt-v.span*0.75)+','+(ln+v.span)+','+(lt+v.span*0.75)+'&layer=mapnik&marker='+lt+','+ln;
+    var el  = document.getElementById('map-content');
+    el.classList.remove('map-fading'); void el.offsetWidth; el.classList.add('map-fading');
+    el.innerHTML = '<iframe src="'+url+'" scrolling="no"></iframe>';
+    document.getElementById('map-title').textContent = v.name;
+  }
+  function setRing(cd, total) {
+    var prog = document.getElementById('timer-progress');
+    prog.style.strokeDasharray  = CIRC;
+    prog.style.strokeDashoffset = CIRC*(1-cd/total);
+    document.getElementById('timer-label').textContent = cd+'s';
+  }
+  function startMap() {
+    if (!lat) return;
+    if (mapInterval)     { clearInterval(mapInterval);     mapInterval=null; }
+    if (stoppedInterval) { clearInterval(stoppedInterval); stoppedInterval=null; }
+    if (!isMoving) {
+      stoppedIndex=0; stoppedCountdown=MAP_STOP[0].dur;
+      renderMap(lat,lon,MAP_STOP[stoppedIndex]);
+      setRing(stoppedCountdown,MAP_STOP[stoppedIndex].dur);
+      stoppedInterval=setInterval(function(){
+        stoppedCountdown--;
+        setRing(stoppedCountdown,MAP_STOP[stoppedIndex].dur);
+        if(stoppedCountdown<=0){
+          stoppedIndex=(stoppedIndex+1)%MAP_STOP.length;
+          stoppedCountdown=MAP_STOP[stoppedIndex].dur;
+          renderMap(lat,lon,MAP_STOP[stoppedIndex]);
+        }
+      },1000);
+    } else {
+      mapIndex=0; mapCountdown=MAP_MOVE[0].dur;
+      renderMap(lat,lon,MAP_MOVE[mapIndex]);
+      setRing(mapCountdown,MAP_MOVE[mapIndex].dur);
+      mapInterval=setInterval(function(){
+        mapCountdown--;
+        setRing(mapCountdown,MAP_MOVE[mapIndex].dur);
+        if(mapCountdown<=0){
+          mapIndex=(mapIndex+1)%MAP_MOVE.length;
+          mapCountdown=MAP_MOVE[mapIndex].dur;
+          renderMap(lat,lon,MAP_MOVE[mapIndex]);
+        }
+      },1000);
+    }
+  }
+
+  // Weather
+  function fetchWeather(lt, ln) {
+    var now = Date.now();
+    if (now-lastTemp < 5*60*1000) return; lastTemp=now;
+    fetch('https://api.open-meteo.com/v1/forecast?latitude='+lt+'&longitude='+ln+'&current_weather=true&temperature_unit=fahrenheit')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var f = Math.round(d.current_weather.temperature);
+        document.getElementById('val-temp-f').textContent = f;
+        document.getElementById('val-temp-c').textContent = Math.round((f-32)*5/9);
+        document.getElementById('dot-temp').style.background = '#ff6a00';
+      }).catch(function(){ document.getElementById('dot-temp').style.background='#f87171'; });
+  }
+
+  // Geocode
+  function fetchGeo(lt, ln) {
+    var now = Date.now();
+    if (now-lastGeo < 30000) return; lastGeo=now;
+    fetch('https://nominatim.openstreetmap.org/reverse?lat='+lt+'&lon='+ln+'&format=json')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var a = d.address;
+        window._street = a.road||a.pedestrian||a.county||'';
+        window._city   = (a.city||a.town||a.village||a.county||'')+(( a.city||a.town||a.village||a.county)&&(a.state_code||a.state)?', ':'')+( a.state_code||a.state||'');
+        updateLocation();
+      }).catch(function(){});
+  }
+
+  function updateLocation() {
+    var se = document.getElementById('val-street');
+    var ce = document.getElementById('val-city');
+    if (se) se.textContent = isMoving ? (window._street||'Locating...') : 'Somewhere USA 🇺🇸';
+    if (ce) ce.textContent = window._city||'--';
+  }
+
+  // Timezone
+  function fetchTZ(lt, ln) {
+    var now = Date.now();
+    if (now-lastTz < 5*60*1000) return; lastTz=now;
+    fetch('https://timeapi.io/api/TimeZone/coordinate?latitude='+lt+'&longitude='+ln)
+      .then(function(r){return r.json();})
+      .then(function(d){ if(d.timeZone) userTZ=d.timeZone; })
+      .catch(function(){});
+  }
+
+  // GPS
+  function onPos(pos) {
+    var c = pos.coords;
+    lat = c.latitude; lon = c.longitude;
+    var mph = (c.speed!=null&&c.speed>=0) ? Math.round(c.speed*2.23694) : 0;
+    var was = isMoving;
+    isMoving = mph>=2;
+    fetchWeather(lat,lon);
+    fetchGeo(lat,lon);
+    fetchTZ(lat,lon);
+    updateLocation();
+    if (!mapStarted) { mapStarted=true; startMap(); }
+    else if (was!==isMoving) { startMap(); }
+  }
+
+  function onErr(e) {
+    var msg = e ? (e.code===1?'Location denied':e.code===2?'GPS unavailable':'GPS timeout') : 'GPS Error';
+    document.getElementById('val-street').textContent = msg;
+    document.getElementById('val-city').textContent   = 'Check settings';
+    document.getElementById('dot-temp').style.background = '#f87171';
+  }
+
+  // Start GPS on button tap
+  document.getElementById('start-btn').addEventListener('click', function() {
+    document.getElementById('gps-prompt').classList.add('hidden');
+    scale();
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(onPos, onErr, {
+        enableHighAccuracy: true,
+        timeout: 30000,
+        maximumAge: 0
+      });
+    } else {
+      onErr(null);
+    }
+  });
+</script>
+</body>
+</html>
