@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rollin' 18 Stream Overlay</title>
+<title>Rollin' 18</title>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Rajdhani:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,29 +19,20 @@
 
   :root {
     --orange: #ffffff;
-    --orange-glow: rgba(255,255,255,0.3);
-    --orange-dim: rgba(255,255,255,0.85);
+    --accent: #ff6a00;
     --dark: rgba(10, 8, 6, 0.55);
     --dark-solid: rgba(12,9,6,0.70);
     --border: rgba(255,255,255,0.25);
     --text: #ffffff;
     --text-dim: rgba(255,255,255,0.65);
-    --accent: #ff6a00;
-    --stripe: repeating-linear-gradient(
-      -55deg,
-      rgba(255,106,0,0.07) 0px, rgba(255,106,0,0.07) 3px,
-      transparent 3px, transparent 10px
-    );
   }
 
-  /* ══════════════════════════════════════
-     MAP — top RIGHT corner, flush
-  ══════════════════════════════════════ */
+  /* ── MAP top right ── */
   #map-panel {
     position: absolute;
     top: 0; right: 0;
     width: 380px; height: 280px;
-    background: rgba(10,8,6,0.55);
+    background: var(--dark);
     border-left: 3px solid var(--accent);
     border-bottom: 3px solid var(--accent);
     border-bottom-left-radius: 48px;
@@ -51,7 +42,7 @@
     position: absolute;
     top: 0; left: 0; right: 0; height: 30px;
     background: var(--dark-solid);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid rgba(255,106,0,0.3);
     display: flex; align-items: center;
     justify-content: space-between;
     padding: 0 12px; z-index: 10;
@@ -61,7 +52,7 @@
     letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase;
   }
   .map-timer-wrap { display: flex; align-items: center; gap: 6px; }
-  .map-timer-label { font-size: 11px; color: var(--text-dim); letter-spacing: 0.08em; }
+  .map-timer-label { font-size: 11px; color: var(--text-dim); }
   .timer-ring { width: 18px; height: 18px; }
   .timer-ring circle { fill: none; stroke: rgba(255,106,0,0.2); stroke-width: 3; }
   .timer-ring .progress {
@@ -74,25 +65,18 @@
     display: flex; align-items: center; justify-content: center;
   }
   .map-content iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
-  .map-placeholder {
-    color: var(--orange-dim); font-size: 12px;
-    letter-spacing: 0.15em; text-align: center; line-height: 2;
-  }
+  .map-placeholder { color: rgba(255,106,0,0.4); font-size: 12px; letter-spacing: 0.15em; }
   .nesw {
     position: absolute; z-index: 10;
     font-size: 11px; font-weight: 700; color: var(--accent);
     pointer-events: none; text-shadow: 0 1px 5px rgba(0,0,0,0.95);
   }
-  .nesw.n { top: 34px;  left: 50%; transform: translateX(-50%); }
+  .nesw.n { top: 34px; left: 50%; transform: translateX(-50%); }
   .nesw.s { bottom: 4px; left: 50%; transform: translateX(-50%); }
   .nesw.e { right: 5px; top: 50%; transform: translateY(-50%); margin-top: 15px; }
-  .nesw.w { left: 5px;  top: 50%; transform: translateY(-50%); margin-top: 15px; }
+  .nesw.w { left: 5px; top: 50%; transform: translateY(-50%); margin-top: 15px; }
 
-  
-
-  /* ══════════════════════════════════════
-     TOP LEFT — Clock flush to corner
-  ══════════════════════════════════════ */
+  /* ── CLOCK top left ── */
   #clock-block {
     position: absolute;
     top: 0; left: 0;
@@ -100,7 +84,7 @@
     border-right: 3px solid var(--accent);
     border-bottom: 3px solid var(--accent);
     border-bottom-right-radius: 48px;
-    padding: 12px 24px 12px 18px;
+    padding: 12px 32px 14px 18px;
     min-width: 240px;
   }
   #clock-time {
@@ -114,45 +98,44 @@
     text-transform: uppercase; margin-top: 5px;
   }
   #clock-tz {
-    font-size: 11px; font-weight: 400;
-    color: var(--text-dim); letter-spacing: 0.15em; text-transform: uppercase;
+    font-size: 11px; color: var(--text-dim);
+    letter-spacing: 0.15em; text-transform: uppercase;
   }
 
-  /* ══════════════════════════════════════
-     CHANNEL BRANDING — inside bottom bar
-  ══════════════════════════════════════ */
-  #brand-shadow-box {
-    padding: 4px 14px 6px 14px;
-    border-radius: 6px;
-    background: rgba(0,0,0,0.50);
-    border: 2px solid var(--accent);
-    box-shadow:
-      0 0 0 3px rgba(0,0,0,0.7),
-      0 0 14px rgba(255,106,0,0.4),
-      0 0 30px rgba(255,106,0,0.15);
-    display: inline-block;
+  /* ── RIGHT PANEL: Temp ── */
+  #right-panel {
+    position: absolute;
+    top: 292px; right: 0;
+    width: 180px;
   }
-  #brand-name {
-    font-family: 'Pacifico', cursive;
-    font-size: 46px; color: var(--orange);
-    letter-spacing: 0.02em; line-height: 1;
-    text-shadow:
-      -2px -2px 0 #000,  2px -2px 0 #000,
-      -2px  2px 0 #000,  2px  2px 0 #000,
-       0px  3px 0 #000,
-       0 0 16px rgba(245,197,24,0.7), 0 0 30px rgba(245,197,24,0.3);
+  .stat-card {
+    background: var(--dark);
+    border: 1px solid rgba(255,106,0,0.3);
+    border-left: 4px solid var(--accent);
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    padding: 10px 16px 10px 14px;
+    margin-bottom: 10px;
+    position: relative;
   }
-  #brand-tagline {
-    font-family: 'Rajdhani', sans-serif;
+  .stat-label {
     font-size: 11px; font-weight: 600;
-    letter-spacing: 0.35em; color: #f5c518;
-    text-transform: uppercase; margin-top: 2px;
-    text-align: center; opacity: 0.8;
+    letter-spacing: 0.22em; color: rgba(255,106,0,0.8);
+    text-transform: uppercase; margin-bottom: 3px;
+  }
+  .stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 46px; color: var(--text);
+    line-height: 0.95; font-variant-numeric: tabular-nums;
+  }
+  .stat-unit { font-size: 13px; color: var(--accent); margin-left: 3px; }
+  .stat-dot {
+    position: absolute; top: 10px; right: 10px;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #333;
   }
 
-  /* ══════════════════════════════════════
-     BOTTOM BAR
-  ══════════════════════════════════════ */
+  /* ── BOTTOM BAR ── */
   #bottom-bar {
     position: absolute;
     bottom: 0; left: 0; right: 0; height: 95px;
@@ -164,8 +147,7 @@
   #bottom-bar::before {
     content: ''; position: absolute;
     left: 0; top: 0; bottom: 0; width: 5px;
-    background: var(--accent); box-shadow: 0 0 14px rgba(255,106,0,0.35);
-    z-index: 3;
+    background: var(--accent);
   }
   .bar-col {
     flex: 1; display: flex; flex-direction: column;
@@ -174,8 +156,6 @@
     position: relative; z-index: 2;
   }
   .bar-col:last-child { border-right: none; }
-  .bar-col.wide { flex: 3; }
-  .bar-col.center { align-items: center; text-align: center; }
   .bar-label {
     font-size: 10px; font-weight: 600;
     letter-spacing: 0.22em; color: var(--text-dim);
@@ -184,64 +164,82 @@
   .bar-val {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 34px; color: var(--text);
-    line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: 0.04em;
+    line-height: 1; font-variant-numeric: tabular-nums;
   }
-
   .loc-dot {
     display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-    background: var(--accent); box-shadow: 0 0 8px rgba(255,106,0,0.35);
-    margin-right: 8px; flex-shrink: 0;
-    animation: pulse-dot 2s ease-in-out infinite; vertical-align: middle;
+    background: var(--accent);
+    margin-right: 8px; vertical-align: middle;
+    animation: pulse-dot 2s ease-in-out infinite;
   }
   @keyframes pulse-dot {
-    0%,100%{ box-shadow: 0 0 8px rgba(255,106,0,0.35); }
-    50%    { box-shadow: 0 0 2px rgba(255,106,0,0.35); }
+    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
   }
 
-  /* ── Animations ── */
-  @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  /* ── BRANDING ── */
+  #brand-shadow-box {
+    padding: 4px 14px 6px 14px;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.50);
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 14px rgba(255,106,0,0.4);
+    display: inline-block;
+  }
+  #brand-name {
+    font-family: 'Pacifico', cursive;
+    font-size: 46px; color: var(--accent);
+    letter-spacing: 0.02em; line-height: 1;
+    text-shadow:
+      -2px -2px 0 #000, 2px -2px 0 #000,
+      -2px  2px 0 #000, 2px  2px 0 #000,
+      0 0 16px rgba(255,106,0,0.7);
+  }
+  #brand-tagline {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.35em; color: #f5c518;
+    text-transform: uppercase; margin-top: 2px;
+    text-align: center; opacity: 0.8;
+  }
+
+  /* ── GPS PROMPT ── */
+  #gps-prompt {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 20px; padding: 40px;
+    text-align: center; background: rgba(0,0,0,0.95); z-index: 999;
+  }
+  #gps-prompt h2 {
+    font-family: 'Pacifico', cursive;
+    font-size: 72px; color: var(--accent);
+    text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
+  }
+  #gps-prompt p {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 20px; color: var(--text-dim);
+    max-width: 380px; line-height: 1.7;
+  }
+  #gps-prompt button {
+    background: var(--accent); color: #000;
+    border: none; border-radius: 5px; padding: 18px 52px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px; letter-spacing: 0.14em; cursor: pointer;
+  }
+  #gps-prompt.hidden { display: none; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
   @keyframes mapFade { from{opacity:0} to{opacity:1} }
   .map-fading { animation: mapFade 0.7s ease both; }
-
-  /* ══ end styles ══ */
 </style>
 </head>
 <body>
 
-<script>
-  window.onerror = function(msg, src, line, col, err) {
-    var d = document.getElementById('debug');
-    if (d) d.textContent = 'ERR line ' + line + ': ' + msg;
-    return false;
-  };
-
-  function scaleToFit() {
-    var scaleX = window.innerWidth  / 1920;
-    var scaleY = window.innerHeight / 1080;
-    var scale  = Math.min(scaleX, scaleY);
-    document.body.style.transform       = 'scale(' + scale + ')';
-    document.body.style.transformOrigin = 'top left';
-    document.body.style.width           = '1920px';
-    document.body.style.height          = '1080px';
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    scaleToFit();
-    window.addEventListener('resize', scaleToFit);
-
-    // Start GPS after DOM and scaling are ready
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
-        onPosition,
-        onError,
-        { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
-      );
-    }
-  });
-</script>
-
-<!-- Debug -->
-<div id="debug" style="position:fixed;top:0;left:0;right:0;background:red;color:white;font-size:16px;padding:4px;z-index:9999;display:block;transform:none!important"></div>
+<!-- GPS Prompt -->
+<div id="gps-prompt">
+  <h2>Rollin' 18</h2>
+  <p>Tap below then tap <strong style="color:#fff">Allow</strong> when iOS asks for location.</p>
+  <button id="start-btn">ENABLE GPS</button>
+</div>
 
 <!-- Top Left: Clock -->
 <div id="clock-block">
@@ -250,7 +248,7 @@
   <div id="clock-tz">--</div>
 </div>
 
-<!-- Top Right: Map flush to corner -->
+<!-- Top Right: Map -->
 <div id="map-panel">
   <div class="map-header">
     <span class="map-title" id="map-title">Awaiting GPS...</span>
@@ -271,262 +269,233 @@
   <span class="nesw w">W</span>
 </div>
 
+<!-- Right: Temp -->
+<div id="right-panel">
+  <div class="stat-card">
+    <div class="stat-dot" id="dot-temp"></div>
+    <div class="stat-label">Temp</div>
+    <div>
+      <span class="stat-val" id="val-temp-f">--</span><span class="stat-unit">°F</span>
+      <span style="color:var(--text-dim);font-size:18px;margin:0 4px">/</span>
+      <span class="stat-val" id="val-temp-c" style="font-size:36px">--</span><span class="stat-unit">°C</span>
+    </div>
+  </div>
+</div>
 
 <!-- Bottom Bar -->
 <div id="bottom-bar">
-
-  <!-- Temp — far left -->
-  <div class="bar-col" style="flex:1.2">
-    <div class="bar-label">Temp <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#333;vertical-align:middle;margin-left:4px" id="dot-temp"></span></div>
-    <div class="bar-val">
-      <span id="val-temp-f">--</span><span style="font-size:12px;color:var(--text-dim);margin-left:2px">°F</span>
-      <span style="font-size:16px;color:var(--text-dim);margin:0 5px">/</span>
-      <span id="val-temp-c">--</span><span style="font-size:12px;color:var(--text-dim);margin-left:2px">°C</span>
-    </div>
-  </div>
-
-  <!-- Street + Location grouped & centered -->
+  <!-- Street + Location grouped center -->
   <div style="flex:4;display:flex;align-items:stretch;justify-content:center;border-right:1px solid rgba(255,255,255,0.15);position:relative;z-index:2;">
-    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 16px;border-right:1px solid rgba(255,255,255,0.1)">
+    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 20px;border-right:1px solid rgba(255,255,255,0.1)">
       <div class="bar-label">Street</div>
-      <div class="bar-val" style="font-size:34px" id="val-street">Locating...</div>
+      <div class="bar-val" id="val-street">Locating...</div>
     </div>
-    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 16px;">
+    <div style="display:flex;flex-direction:column;justify-content:center;padding:0 20px;">
       <div class="bar-label">Location</div>
-      <div class="bar-val" style="font-size:34px">
-        <span class="loc-dot"></span><span id="val-city">--</span>
-      </div>
+      <div class="bar-val"><span class="loc-dot"></span><span id="val-city">--</span></div>
     </div>
   </div>
-
-  <!-- Rollin' 18 — far right of bar -->
-  <div class="bar-col" style="align-items:flex-end;padding-right:24px;flex:1.2">
+  <!-- Rollin' 18 far right -->
+  <div class="bar-col" style="align-items:flex-end;padding-right:24px;flex:1.4">
     <div id="brand-shadow-box">
       <div id="brand-name">Rollin' 18</div>
       <div id="brand-tagline">Live on the Road</div>
     </div>
   </div>
-
 </div>
 
 <script>
-  let lat=null, lon=null;
-  let lastElev=0, lastTemp=0, lastGeo=0, lastTz=0;
-  let mapIndex=0, mapCountdown=10, mapStarted=false, mapInterval=null;
-  let isMoving = false;
-  const CIRC = 2 * Math.PI * 7;
-
-  // USA (7s) → State (10s) → Street (15s)
-  const MAP_SEQ = [
-    { name: 'USA View',   span: 28.0,  dur: 7  },
-    { name: 'State View', span: 1.8,   dur: 10 },
-    { name: 'Street View',span: 0.003, dur: 15 },
-  ];
-  // Stopped sequence: USA (7s) → State (10s) loop
-  const MAP_STOPPED_SEQ = [
-    { name: 'USA View',   span: 28.0, dur: 7  },
-    { name: 'State View', span: 1.8,  dur: 10 },
-  ];
-  let stoppedMapIndex = 0;
-  let stoppedMapCountdown = 7;
-  let stoppedMapInterval = null;
-
-  let userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-  function updateClock() {
-    const now  = new Date();
-    const opts = { hour:'numeric', minute:'2-digit', second:'2-digit', hour12:true, timeZone: userTimezone };
-    const parts = Intl.DateTimeFormat('en-US', opts).formatToParts(now);
-    const h  = parts.find(p=>p.type==='hour')?.value || '--';
-    const m  = parts.find(p=>p.type==='minute')?.value || '--';
-    const s  = parts.find(p=>p.type==='second')?.value || '--';
-    const ap = parts.find(p=>p.type==='dayperiod' || p.type==='dayPeriod')?.value || '';
-    document.getElementById('clock-time').textContent = `${h}:${m}:${s} ${ap}`;
-
-    const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const d = new Date(now.toLocaleString('en-US', { timeZone: userTimezone }));
-    document.getElementById('clock-date').textContent =
-      `${days[d.getDay()]}  ·  ${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-
-    const tz = Intl.DateTimeFormat('en-US', { timeZoneName:'short', timeZone: userTimezone })
-      .formatToParts(now).find(p=>p.type==='timeZoneName')?.value || '';
-    document.getElementById('clock-tz').textContent = tz;
-  }
-
-  async function fetchTimezone(lt, ln) {
-    if (Date.now()-lastTz < 5*60*1000) return; lastTz=Date.now();
-    // Use timeapi.io to get accurate timezone from GPS coords (free, no key needed)
-    try {
-      const r = await fetch(`https://timeapi.io/api/TimeZone/coordinate?latitude=${lt}&longitude=${ln}`);
-      const d = await r.json();
-      if (d.timeZone) userTimezone = d.timeZone;
-    } catch(e) {
-      // Fall back to device timezone — already set as default
+  // ── Scale to fit screen ──
+  function scaleToFit() {
+    var s = Math.min(window.innerWidth/1920, window.innerHeight/1080);
+    document.body.style.transform = 'scale('+s+')';
+    document.body.style.transformOrigin = 'top left';
+    document.body.style.width  = '1920px';
+    document.body.style.height = '1080px';
+    var p = document.getElementById('gps-prompt');
+    if (p) {
+      p.style.width  = Math.round(window.innerWidth/s)+'px';
+      p.style.height = Math.round(window.innerHeight/s)+'px';
     }
+  }
+  scaleToFit();
+  window.addEventListener('resize', scaleToFit);
+
+  // ── State ──
+  var lat=null, lon=null, isMoving=false, mapStarted=false;
+  var mapIndex=0, mapCountdown=0, mapInterval=null;
+  var stoppedIndex=0, stoppedCountdown=0, stoppedInterval=null;
+  var lastTemp=0, lastGeo=0, lastTz=0;
+  var CIRC = 2*Math.PI*7;
+  var userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  var MAP_MOVE = [
+    {name:'USA View',   span:28.0,  dur:7 },
+    {name:'State View', span:1.8,   dur:10},
+    {name:'Street View',span:0.003, dur:15}
+  ];
+  var MAP_STOP = [
+    {name:'USA View',   span:28.0, dur:7 },
+    {name:'State View', span:1.8,  dur:10}
+  ];
+
+  // ── Clock ──
+  function updateClock() {
+    var now   = new Date();
+    var opts  = {hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true,timeZone:userTZ};
+    var parts = Intl.DateTimeFormat('en-US',opts).formatToParts(now);
+    var h  = (parts.find(function(p){return p.type==='hour';})||{}).value||'--';
+    var m  = (parts.find(function(p){return p.type==='minute';})||{}).value||'--';
+    var s  = (parts.find(function(p){return p.type==='second';})||{}).value||'--';
+    var ap = (parts.find(function(p){return p.type==='dayperiod'||p.type==='dayPeriod';})||{}).value||'';
+    document.getElementById('clock-time').textContent = h+':'+m+':'+s+' '+ap;
+    var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var d = new Date(now.toLocaleString('en-US',{timeZone:userTZ}));
+    document.getElementById('clock-date').textContent = days[d.getDay()]+'  ·  '+months[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
+    var tz = (Intl.DateTimeFormat('en-US',{timeZoneName:'short',timeZone:userTZ}).formatToParts(now).find(function(p){return p.type==='timeZoneName';})||{}).value||'';
+    document.getElementById('clock-tz').textContent = tz;
   }
   updateClock();
   setInterval(updateClock, 1000);
 
-  function degToCompass(d) {
-    return ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d/22.5)%16];
-  }
-
+  // ── Map ──
   function renderMap(lt, ln, view) {
-    const url = `https://www.openstreetmap.org/export/embed.html?bbox=${ln-view.span},${lt-view.span*0.75},${ln+view.span},${lt+view.span*0.75}&layer=mapnik&marker=${lt},${ln}`;
-    const el  = document.getElementById('map-content');
+    var url = 'https://www.openstreetmap.org/export/embed.html?bbox='+(ln-view.span)+','+(lt-view.span*0.75)+','+(ln+view.span)+','+(lt+view.span*0.75)+'&layer=mapnik&marker='+lt+','+ln;
+    var el = document.getElementById('map-content');
     el.classList.remove('map-fading');
     void el.offsetWidth;
     el.classList.add('map-fading');
-    el.innerHTML = `<iframe src="${url}" scrolling="no"></iframe>`;
+    el.innerHTML = '<iframe src="'+url+'" scrolling="no"></iframe>';
     document.getElementById('map-title').textContent = view.name;
   }
 
-  function updateRing() {
-    const frac = mapCountdown / MAP_SEQ[mapIndex].dur;
-    const prog = document.getElementById('timer-progress');
+  function setRing(countdown, total) {
+    var prog = document.getElementById('timer-progress');
     prog.style.strokeDasharray  = CIRC;
-    prog.style.strokeDashoffset = CIRC * (1 - frac);
-    document.getElementById('timer-label').textContent = `${mapCountdown}s`;
-  }
-
-  function startStoppedMap() {
-    if (stoppedMapInterval) { clearInterval(stoppedMapInterval); stoppedMapInterval = null; }
-    stoppedMapIndex    = 0;
-    stoppedMapCountdown = MAP_STOPPED_SEQ[0].dur;
-    renderMap(lat, lon, MAP_STOPPED_SEQ[stoppedMapIndex]);
-    updateRing();
-    stoppedMapInterval = setInterval(() => {
-      if (isMoving) {
-        clearInterval(stoppedMapInterval); stoppedMapInterval = null;
-        return;
-      }
-      stoppedMapCountdown--;
-      // update ring for stopped sequence
-      const prog = document.getElementById('timer-progress');
-      const frac = stoppedMapCountdown / MAP_STOPPED_SEQ[stoppedMapIndex].dur;
-      prog.style.strokeDasharray  = CIRC;
-      prog.style.strokeDashoffset = CIRC * (1 - frac);
-      document.getElementById('timer-label').textContent = `${stoppedMapCountdown}s`;
-      if (stoppedMapCountdown <= 0) {
-        stoppedMapIndex     = (stoppedMapIndex + 1) % MAP_STOPPED_SEQ.length;
-        stoppedMapCountdown = MAP_STOPPED_SEQ[stoppedMapIndex].dur;
-        renderMap(lat, lon, MAP_STOPPED_SEQ[stoppedMapIndex]);
-      }
-    }, 1000);
+    prog.style.strokeDashoffset = CIRC*(1-countdown/total);
+    document.getElementById('timer-label').textContent = countdown+'s';
   }
 
   function startMap() {
     if (!lat) return;
-    // Clear both interval types
-    if (mapInterval)        { clearInterval(mapInterval);        mapInterval = null; }
-    if (stoppedMapInterval) { clearInterval(stoppedMapInterval); stoppedMapInterval = null; }
+    if (mapInterval)     { clearInterval(mapInterval);     mapInterval=null; }
+    if (stoppedInterval) { clearInterval(stoppedInterval); stoppedInterval=null; }
 
     if (!isMoving) {
-      startStoppedMap();
-      return;
-    }
-
-    // Moving — rotate USA → State → Street
-    mapIndex     = 0;
-    mapCountdown = MAP_SEQ[0].dur;
-    renderMap(lat, lon, MAP_SEQ[mapIndex]);
-    updateRing();
-    mapInterval = setInterval(() => {
-      if (!isMoving) {
-        clearInterval(mapInterval); mapInterval = null;
-        startStoppedMap();
-        return;
-      }
-      mapCountdown--;
-      updateRing();
-      if (mapCountdown <= 0) {
-        mapIndex     = (mapIndex + 1) % MAP_SEQ.length;
-        mapCountdown = MAP_SEQ[mapIndex].dur;
-        renderMap(lat, lon, MAP_SEQ[mapIndex]);
-      }
-    }, 1000);
-  }
-
-  async function fetchWeather(lt, ln) {
-    if (Date.now()-lastTemp < 5*60*1000) return; lastTemp=Date.now();
-    try {
-      const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lt}&longitude=${ln}&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph`);
-      const d = await r.json();
-      const tempF = Math.round(d.current_weather.temperature);
-      const tempC = Math.round((tempF - 32) * 5 / 9);
-      document.getElementById('val-temp-f').textContent = tempF;
-      document.getElementById('val-temp-c').textContent = tempC;
-      document.getElementById('dot-temp').style.background = '#ff6a00';
-      document.getElementById('dot-temp').style.boxShadow  = '0 0 6px #ff6a00';
-    } catch(e){ document.getElementById('dot-temp').style.background='#f87171'; }
-  }
-
-  async function fetchGeocode(lt, ln) {
-    if (Date.now()-lastGeo < 30000) return; lastGeo=Date.now();
-    try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lt}&lon=${ln}&format=json`);
-      const d = await r.json();
-      const a = d.address;
-      const street = a.road || a.pedestrian || a.county || 'Unknown Road';
-      const city   = a.city || a.town || a.village || a.county || '';
-      const state  = a.state_code || a.state || '';
-
-      // Store for toggling
-      window._lastStreet = street;
-      window._lastCity   = `${city}${city&&state?', ':''}${state}`;
-      updateLocationDisplay();
-    } catch(e){}
-  }
-
-  function updateLocationDisplay() {
-    const streetCol = document.getElementById('col-street');
-    const cityEl    = document.getElementById('val-city');
-    const streetEl  = document.getElementById('val-street');
-    if (!streetCol || !cityEl || !streetEl) return;
-    if (isMoving) {
-      streetEl.textContent = window._lastStreet || 'Locating...';
+      stoppedIndex=0; stoppedCountdown=MAP_STOP[0].dur;
+      renderMap(lat,lon,MAP_STOP[stoppedIndex]);
+      setRing(stoppedCountdown, MAP_STOP[stoppedIndex].dur);
+      stoppedInterval = setInterval(function(){
+        stoppedCountdown--;
+        setRing(stoppedCountdown, MAP_STOP[stoppedIndex].dur);
+        if (stoppedCountdown<=0) {
+          stoppedIndex=(stoppedIndex+1)%MAP_STOP.length;
+          stoppedCountdown=MAP_STOP[stoppedIndex].dur;
+          renderMap(lat,lon,MAP_STOP[stoppedIndex]);
+        }
+      },1000);
     } else {
-      streetEl.textContent = 'Somewhere USA 🇺🇸';
+      mapIndex=0; mapCountdown=MAP_MOVE[0].dur;
+      renderMap(lat,lon,MAP_MOVE[mapIndex]);
+      setRing(mapCountdown, MAP_MOVE[mapIndex].dur);
+      mapInterval = setInterval(function(){
+        mapCountdown--;
+        setRing(mapCountdown, MAP_MOVE[mapIndex].dur);
+        if (mapCountdown<=0) {
+          mapIndex=(mapIndex+1)%MAP_MOVE.length;
+          mapCountdown=MAP_MOVE[mapIndex].dur;
+          renderMap(lat,lon,MAP_MOVE[mapIndex]);
+        }
+      },1000);
     }
-    cityEl.textContent = window._lastCity || '--';
   }
 
+  // ── Weather ──
+  function fetchWeather(lt, ln) {
+    var now = Date.now();
+    if (now-lastTemp < 5*60*1000) return; lastTemp=now;
+    fetch('https://api.open-meteo.com/v1/forecast?latitude='+lt+'&longitude='+ln+'&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var f = Math.round(d.current_weather.temperature);
+        var c = Math.round((f-32)*5/9);
+        document.getElementById('val-temp-f').textContent = f;
+        document.getElementById('val-temp-c').textContent = c;
+        document.getElementById('dot-temp').style.background = '#ff6a00';
+      })
+      .catch(function(){
+        document.getElementById('dot-temp').style.background = '#f87171';
+      });
+  }
+
+  // ── Geocode ──
+  function fetchGeocode(lt, ln) {
+    var now = Date.now();
+    if (now-lastGeo < 30000) return; lastGeo=now;
+    fetch('https://nominatim.openstreetmap.org/reverse?lat='+lt+'&lon='+ln+'&format=json')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var a = d.address;
+        var street = a.road||a.pedestrian||a.county||'';
+        var city   = a.city||a.town||a.village||a.county||'';
+        var state  = a.state_code||a.state||'';
+        window._street = street;
+        window._city   = city+(city&&state?', ':'')+state;
+        updateLocation();
+      })
+      .catch(function(){});
+  }
+
+  function updateLocation() {
+    var se = document.getElementById('val-street');
+    var ce = document.getElementById('val-city');
+    if (!se||!ce) return;
+    se.textContent = isMoving ? (window._street||'Locating...') : 'Somewhere USA 🇺🇸';
+    ce.textContent = window._city||'--';
+  }
+
+  // ── Timezone ──
+  function fetchTZ(lt, ln) {
+    var now = Date.now();
+    if (now-lastTz < 5*60*1000) return; lastTz=now;
+    fetch('https://timeapi.io/api/TimeZone/coordinate?latitude='+lt+'&longitude='+ln)
+      .then(function(r){return r.json();})
+      .then(function(d){ if(d.timeZone) userTZ=d.timeZone; })
+      .catch(function(){});
+  }
+
+  // ── GPS ──
   function onPosition(pos) {
-    lat = pos.coords.latitude; lon = pos.coords.longitude;
-    const { speed } = pos.coords;
-
-    const mph = speed!=null&&speed>=0 ? Math.round(speed*2.23694) : 0;
-
-    // Detect moving vs stopped (threshold: 2 mph)
-    const wasMoving = isMoving;
-    isMoving = mph >= 2;
+    var c   = pos.coords;
+    lat = c.latitude; lon = c.longitude;
+    var mph = c.speed!=null&&c.speed>=0 ? Math.round(c.speed*2.23694) : 0;
+    var was = isMoving;
+    isMoving = mph>=2;
 
     fetchWeather(lat,lon);
     fetchGeocode(lat,lon);
-    fetchTimezone(lat,lon);
-    updateLocationDisplay();
+    fetchTZ(lat,lon);
+    updateLocation();
 
-    if (!mapStarted) {
-      mapStarted = true;
-      startMap();
-    } else if (wasMoving !== isMoving) {
-      startMap();
-    }
+    if (!mapStarted) { mapStarted=true; startMap(); }
+    else if (was!==isMoving) { startMap(); }
   }
 
-  function onError(err) {
-    const msg = err ? (err.code === 1 ? 'Location denied' : err.code === 2 ? 'GPS unavailable' : 'GPS timeout') : 'GPS Error';
-    document.getElementById('val-street').textContent = msg;
-    document.getElementById('val-city').textContent   = 'Check location settings';
-    // Show red on all dots
-    ['dot-temp'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.background = '#f87171';
+  function onError(e) {
+    document.getElementById('val-street').textContent = e ? (e.code===1?'Location denied':e.code===2?'GPS unavailable':'GPS timeout') : 'GPS Error';
+    document.getElementById('val-city').textContent = 'Check location settings';
+  }
+
+  document.getElementById('start-btn').addEventListener('click', function() {
+    document.getElementById('gps-prompt').classList.add('hidden');
+    scaleToFit();
+    navigator.geolocation.watchPosition(onPosition, onError, {
+      enableHighAccuracy: true,
+      timeout: 30000,
+      maximumAge: 0
     });
-  }
-
-  // GPS started in DOMContentLoaded above
+  });
 </script>
 </body>
 </html>
