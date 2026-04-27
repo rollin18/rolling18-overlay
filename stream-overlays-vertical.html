@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rollin' 18 Vertical</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 1080px; height: 1920px;
+    overflow: hidden; background: transparent;
+    font-family: 'Barlow Condensed', sans-serif;
+    position: relative;
+  }
+
+  :root {
+    --yellow: #f5c518;
+    --dark: rgba(15,15,20,0.80);
+    --dark-solid: rgba(10,10,14,0.95);
+    --text: #ffffff;
+    --text-dim: rgba(255,255,255,0.55);
+  }
+
+  /* ── MAP top center ── */
+  #map-panel {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 480px;
+    background: var(--dark);
+    border-bottom: 3px solid var(--yellow);
+    overflow: hidden;
+  }
+  .map-header {
+    position: absolute; top: 0; left: 0; right: 0; height: 36px;
+    background: var(--dark-solid);
+    border-bottom: 1px solid rgba(245,197,24,0.3);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 18px; z-index: 10;
+  }
+  .map-title { font-size:13px; font-weight:700; letter-spacing:0.2em; color:var(--yellow); text-transform:uppercase; }
+  .map-timer-wrap { display:flex; align-items:center; gap:6px; }
+  .map-timer-label { font-size:12px; color:var(--text-dim); }
+  .timer-ring { width:22px; height:22px; }
+  .timer-ring circle { fill:none; stroke:rgba(245,197,24,0.2); stroke-width:3; }
+  .timer-ring .progress {
+    stroke:var(--yellow); stroke-dasharray:44; stroke-dashoffset:0;
+    stroke-linecap:round; transform:rotate(-90deg); transform-origin:center;
+    transition:stroke-dashoffset 1s linear;
+  }
+  .map-content {
+    position:absolute; top:36px; left:0; right:0; bottom:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .map-content iframe { width:100%; height:100%; border:none; pointer-events:none; }
+  .map-placeholder { color:rgba(245,197,24,0.4); font-size:14px; letter-spacing:0.15em; text-align:center; }
+  .nesw {
+    position:absolute; z-index:10; font-size:14px; font-weight:700; color:var(--yellow);
+    pointer-events:none; text-shadow:0 1px 5px rgba(0,0,0,0.95);
+  }
+  .nesw.n { top:40px; left:50%; transform:translateX(-50%); }
+  .nesw.s { bottom:8px; left:50%; transform:translateX(-50%); }
+  .nesw.e { right:8px; top:50%; transform:translateY(-50%); margin-top:18px; }
+  .nesw.w { left:8px; top:50%; transform:translateY(-50%); margin-top:18px; }
+
+  /* ── TEMP card center ── */
+  #temp-card {
+    position:absolute;
+    top:500px; left:50%; transform:translateX(-50%);
+    background:var(--dark);
+    border:1px solid rgba(245,197,24,0.3);
+    border-top:3px solid var(--yellow);
+    border-radius:0 0 12px 12px;
+    padding:16px 40px 14px;
+    text-align:center; min-width:280px;
+  }
+  #temp-card .card-label {
+    font-family:'Barlow',sans-serif;
+    font-size:11px; font-weight:600;
+    letter-spacing:0.22em; color:var(--yellow); opacity:0.75;
+    text-transform:uppercase; margin-bottom:4px;
+  }
+  #temp-card .card-val {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:80px; font-weight:700; color:var(--yellow);
+    line-height:0.95; font-variant-numeric:tabular-nums;
+  }
+  #temp-card .card-sub {
+    font-size:28px; color:var(--text-dim);
+    font-family:'Barlow Condensed',sans-serif; margin-top:4px;
+  }
+  #dot-temp {
+    display:inline-block; width:8px; height:8px; border-radius:50%;
+    background:#333; margin-left:8px; vertical-align:middle;
+    transition:background 0.4s;
+  }
+
+  /* ── BOTTOM BAR ── */
+  #bottom-bar {
+    position:absolute; bottom:0; left:0; right:0; height:180px;
+    background:var(--dark);
+    border-top:2px solid rgba(245,197,24,0.4);
+    display:flex; flex-direction:column;
+    align-items:stretch; overflow:hidden;
+  }
+  #bottom-bar::after {
+    content:''; position:absolute; inset:0;
+    background: repeating-linear-gradient(
+      -45deg,
+      rgba(180,20,20,0.10) 0px, rgba(180,20,20,0.10) 3px,
+      transparent 3px, transparent 10px
+    );
+    pointer-events:none;
+  }
+  .bar-row {
+    flex:1; display:flex; align-items:center;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    position:relative; z-index:1; padding:0 28px;
+  }
+  .bar-row:last-child { border-bottom:none; }
+  .bar-label {
+    font-family:'Barlow',sans-serif;
+    font-size:11px; font-weight:600;
+    letter-spacing:0.20em; text-transform:uppercase;
+    color:var(--yellow); opacity:0.75; margin-right:16px;
+    min-width:90px;
+  }
+  .bar-val {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:36px; font-weight:700;
+    color:var(--text); line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .loc-dot {
+    display:inline-block; width:8px; height:8px; border-radius:50%;
+    background:var(--yellow); margin-right:10px; vertical-align:middle;
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── TIME block ── */
+  #time-block {
+    position:absolute;
+    bottom:188px; right:0;
+    background:var(--dark);
+    border-left:3px solid var(--yellow);
+    border-top:3px solid var(--yellow);
+    border-top-left-radius:20px;
+    padding:12px 20px 10px 16px;
+    text-align:right;
+  }
+  #time-val { font-family:'Barlow Condensed',sans-serif; font-size:48px; font-weight:700; color:var(--yellow); line-height:0.95; font-variant-numeric:tabular-nums; }
+  #time-tz  { font-size:13px; color:var(--text-dim); letter-spacing:0.12em; text-transform:uppercase; margin-top:3px; }
+
+  @keyframes mapFade { from{opacity:0} to{opacity:1} }
+  .map-fading { animation:mapFade 0.7s ease both; }
+</style>
+</head>
+<body>
+
+<!-- Top: Map -->
+<div id="map-panel">
+  <div class="map-header">
+    <span class="map-title" id="map-title">Awaiting GPS...</span>
+    <div class="map-timer-wrap">
+      <span class="map-timer-label" id="timer-label">--s</span>
+      <svg class="timer-ring" viewBox="0 0 18 18">
+        <circle cx="9" cy="9" r="7"/>
+        <circle class="progress" id="timer-progress" cx="9" cy="9" r="7"/>
+      </svg>
+    </div>
+  </div>
+  <div class="map-content" id="map-content">
+    <div class="map-placeholder">AWAITING GPS...</div>
+  </div>
+  <span class="nesw n">N</span>
+  <span class="nesw s">S</span>
+  <span class="nesw e">E</span>
+  <span class="nesw w">W</span>
+</div>
+
+<!-- Temp card below map -->
+<div id="temp-card">
+  <div class="card-label">Temperature <span id="dot-temp"></span></div>
+  <div><span class="card-val" id="val-temp-f">--</span><span style="font-size:32px;color:var(--text-dim);margin-left:4px">°F</span></div>
+  <div class="card-sub"><span id="val-temp-c">--</span>°C</div>
+</div>
+
+<!-- Time block bottom right above bar -->
+<div id="time-block">
+  <div id="time-val">--:-- --</div>
+  <div id="time-tz">--</div>
+</div>
+
+<!-- Bottom Bar -->
+<div id="bottom-bar">
+  <div class="bar-row">
+    <div class="bar-label">Location</div>
+    <div class="bar-val"><span class="loc-dot"></span><span id="val-city">--</span></div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-label">Street</div>
+    <div class="bar-val" id="val-street">Locating...</div>
+  </div>
+</div>
+
+<script>
+  // Scale to fit
+  function scale() {
+    var s = Math.min(window.innerWidth/1080, window.innerHeight/1920);
+    document.body.style.transform = 'scale('+s+')';
+    document.body.style.transformOrigin = 'top left';
+    document.body.style.width  = '1080px';
+    document.body.style.height = '1920px';
+  }
+  scale();
+  window.addEventListener('resize', scale);
+
+  var lat=null, lon=null, isMoving=false, mapStarted=false;
+  var mapIndex=0, mapCountdown=0, mapInterval=null;
+  var stoppedIndex=0, stoppedCountdown=0, stoppedInterval=null;
+  var lastTemp=0, lastGeo=0, lastTz=0;
+  var CIRC=2*Math.PI*7;
+  var userTZ=Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  // Home zone — ZIP 19355 Malvern PA
+  var HOME_LAT=40.0423, HOME_LON=-75.5135, HOME_RADIUS=1.0;
+  function distMiles(a,b,c,d){
+    var R=3958.8,dL=(c-a)*Math.PI/180,dO=(d-b)*Math.PI/180;
+    var x=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dO/2)*Math.sin(dO/2);
+    return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  }
+  function nearHome(){ return lat&&lon&&distMiles(lat,lon,HOME_LAT,HOME_LON)<=HOME_RADIUS; }
+
+  var MAP_HOME=[{name:'USA View',span:28.0,dur:7},{name:'State View',span:1.8,dur:10}];
+  var MAP_MOVE=[{name:'USA View',span:28.0,dur:7},{name:'State View',span:1.8,dur:10},{name:'Street View',span:0.003,dur:15}];
+  var MAP_STOP=[{name:'USA View',span:28.0,dur:7},{name:'State View',span:1.8,dur:10}];
+
+  // Clock
+  function tick() {
+    var now=new Date();
+    var opts={hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true,timeZone:userTZ};
+    var pts=Intl.DateTimeFormat('en-US',opts).formatToParts(now);
+    var get=function(t){return(pts.find(function(p){return p.type===t;})||{}).value||'--';};
+    var ap=(pts.find(function(p){return p.type==='dayperiod'||p.type==='dayPeriod';})||{}).value||'';
+    var tz=(Intl.DateTimeFormat('en-US',{timeZoneName:'short',timeZone:userTZ}).formatToParts(now).find(function(p){return p.type==='timeZoneName';})||{}).value||'';
+    document.getElementById('time-val').textContent=get('hour')+':'+get('minute')+':'+get('second')+' '+ap;
+    document.getElementById('time-tz').textContent=tz;
+  }
+  tick(); setInterval(tick,1000);
+
+  // Map
+  function renderMap(lt,ln,v) {
+    var url='https://www.openstreetmap.org/export/embed.html?bbox='+(ln-v.span)+','+(lt-v.span*0.75)+','+(ln+v.span)+','+(lt+v.span*0.75)+'&layer=mapnik&marker='+lt+','+ln;
+    var el=document.getElementById('map-content');
+    el.classList.remove('map-fading'); void el.offsetWidth; el.classList.add('map-fading');
+    el.innerHTML='<iframe src="'+url+'" scrolling="no"></iframe>';
+    document.getElementById('map-title').textContent=v.name;
+  }
+  function setRing(cd,total){
+    var p=document.getElementById('timer-progress');
+    p.style.strokeDasharray=CIRC; p.style.strokeDashoffset=CIRC*(1-cd/total);
+    document.getElementById('timer-label').textContent=cd+'s';
+  }
+  function startMap() {
+    if(!lat) return;
+    if(mapInterval){clearInterval(mapInterval);mapInterval=null;}
+    if(stoppedInterval){clearInterval(stoppedInterval);stoppedInterval=null;}
+    var seq = nearHome() ? MAP_HOME : (isMoving ? MAP_MOVE : MAP_STOP);
+    var idx=0, cd=seq[0].dur;
+    renderMap(lat,lon,seq[idx]); setRing(cd,seq[idx].dur);
+    stoppedInterval=setInterval(function(){
+      cd--; setRing(cd,seq[idx].dur);
+      if(cd<=0){idx=(idx+1)%seq.length;cd=seq[idx].dur;renderMap(lat,lon,seq[idx]);}
+    },1000);
+  }
+
+  // Weather
+  function fetchWeather(lt,ln){
+    if(Date.now()-lastTemp<5*60*1000) return; lastTemp=Date.now();
+    fetch('https://api.open-meteo.com/v1/forecast?latitude='+lt+'&longitude='+ln+'&current_weather=true&temperature_unit=fahrenheit')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var f=Math.round(d.current_weather.temperature);
+        document.getElementById('val-temp-f').textContent=f;
+        document.getElementById('val-temp-c').textContent=Math.round((f-32)*5/9);
+        document.getElementById('dot-temp').style.background='#f5c518';
+      }).catch(function(){document.getElementById('dot-temp').style.background='#f87171';});
+  }
+
+  // Geocode
+  function fetchGeo(lt,ln){
+    if(Date.now()-lastGeo<30000) return; lastGeo=Date.now();
+    fetch('https://nominatim.openstreetmap.org/reverse?lat='+lt+'&lon='+ln+'&format=json')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var a=d.address;
+        window._street=a.road||a.pedestrian||a.county||'';
+        var city=a.city||a.town||a.village||a.county||'';
+        var state=a.state_code||a.state||'';
+        window._city=city+(city&&state?', ':'')+state;
+        updateLoc();
+      }).catch(function(){});
+  }
+
+  function updateLoc(){
+    var se=document.getElementById('val-street');
+    var ce=document.getElementById('val-city');
+    if(se) se.textContent=isMoving?(window._street||'Locating...'):'Somewhere USA 🇺🇸';
+    if(ce) ce.textContent=window._city||'--';
+  }
+
+  // Timezone
+  function fetchTZ(lt,ln){
+    if(Date.now()-lastTz<5*60*1000) return; lastTz=Date.now();
+    fetch('https://timeapi.io/api/TimeZone/coordinate?latitude='+lt+'&longitude='+ln)
+      .then(function(r){return r.json();})
+      .then(function(d){if(d.timeZone) userTZ=d.timeZone;})
+      .catch(function(){});
+  }
+
+  // GPS
+  function onPos(pos){
+    var c=pos.coords;
+    lat=c.latitude; lon=c.longitude;
+    var mph=(c.speed!=null&&c.speed>=0)?Math.round(c.speed*2.23694):0;
+    var was=isMoving; isMoving=mph>=2;
+    fetchWeather(lat,lon);
+    fetchGeo(lat,lon);
+    fetchTZ(lat,lon);
+    updateLoc();
+    if(!mapStarted){mapStarted=true;startMap();}
+    else if(was!==isMoving){startMap();}
+  }
+
+  function onErr(e){
+    var msg=e?(e.code===1?'Location denied':e.code===2?'GPS unavailable':'GPS timeout'):'GPS Error';
+    document.getElementById('val-street').textContent=msg;
+    document.getElementById('dot-temp').style.background='#f87171';
+  }
+
+  window.addEventListener('load',function(){
+    if(navigator.geolocation){
+      navigator.geolocation.watchPosition(onPos,onErr,{
+        enableHighAccuracy:true,timeout:30000,maximumAge:0
+      });
+    } else { onErr(null); }
+  });
+</script>
+</body>
+</html>
