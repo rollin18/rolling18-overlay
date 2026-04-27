@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rollin' 18</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 1920px; height: 1080px;
+    overflow: hidden; background: transparent;
+    font-family: 'Barlow Condensed', sans-serif;
+    position: relative;
+  }
+
+  :root {
+    --yellow: #f5c518;
+    --dark: rgba(15,15,20,0.80);
+    --text: #ffffff;
+    --text-dim: rgba(255,255,255,0.55);
+  }
+
+  /* ── Shared box ── */
+  .box {
+    position: absolute;
+    background: var(--dark);
+    border-radius: 6px;
+    padding: 8px 16px 8px 14px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .box-label {
+    font-family: 'Barlow', sans-serif;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-dim); line-height: 1; margin-bottom: 3px;
+  }
+  .box-value {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 42px; font-weight: 700;
+    color: var(--yellow); line-height: 1;
+    font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
+  }
+  .box-sub {
+    font-size: 13px; font-weight: 400;
+    color: var(--text-dim); letter-spacing: 0.12em; margin-top: 2px;
+  }
+
+  /* ── TOP LEFT: Date/Time ── */
+  #box-time {
+    top: 28px; left: 28px; min-width: 220px;
+  }
+  #box-time .box-value { font-size: 48px; }
+
+  /* ── BOTTOM BAR ── */
+  #bottom-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0; height: 90px;
+    background: var(--dark);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: stretch;
+  }
+  /* diagonal stripe texture */
+  #bottom-bar::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      rgba(180,20,20,0.12) 0px, rgba(180,20,20,0.12) 3px,
+      transparent 3px, transparent 10px
+    );
+    pointer-events: none;
+  }
+
+  .bar-section {
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: center; padding: 0 24px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    position: relative; z-index: 1;
+  }
+  .bar-section:last-child { border-right: none; }
+  .bar-section.center { flex: 2; align-items: center; text-align: center; }
+
+  .bar-label {
+    font-family: 'Barlow', sans-serif;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.20em; text-transform: uppercase;
+    color: var(--yellow); opacity: 0.7;
+    line-height: 1; margin-bottom: 3px;
+  }
+  .bar-val {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 30px; font-weight: 700;
+    color: var(--text); line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .bar-val.big { font-size: 36px; }
+
+  /* pulsing location dot */
+  .loc-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--yellow); margin-right: 8px; vertical-align: middle;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── end styles ── */
+</style>
+</head>
+<body>
+
+<!-- Bottom Bar -->
+<div id="bottom-bar">
+  <div class="bar-section">
+    <div class="bar-label">Temperature <span id="dot-temp" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#444;vertical-align:middle;margin-left:2px"></span></div>
+    <div class="bar-val big" id="val-temp">--°F</div>
+    <div class="bar-val" style="font-size:18px;color:var(--text-dim)" id="val-temp-c">-- °C</div>
+  </div>
+  <div class="bar-section center">
+    <div class="bar-label">Location</div>
+    <div class="bar-val"><span class="loc-dot"></span><span id="val-city">--</span></div>
+  </div>
+  <div class="bar-section center">
+    <div class="bar-label">Street</div>
+    <div class="bar-val big" id="val-street">Locating...</div>
+  </div>
+  <div class="bar-section" style="align-items:flex-end">
+    <div class="bar-label">Time</div>
+    <div class="bar-val big" id="val-time-bar">--:-- --</div>
+    <div class="bar-val" style="font-size:16px;color:var(--text-dim)" id="val-tz-bar">--</div>
+  </div>
+</div>
+
+<script>
+  // Scale to fit
+  function scale() {
+    var s = Math.min(window.innerWidth/1920, window.innerHeight/1080);
+    document.body.style.transform = 'scale('+s+')';
+    document.body.style.transformOrigin = 'top left';
+    document.body.style.width  = '1920px';
+    document.body.style.height = '1080px';
+  }
+  scale();
+  window.addEventListener('resize', scale);
+
+  var lastTemp=0, lastGeo=0, lastElev=0, lastTz=0;
+  var userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  var isMoving = false;
+
+  // Clock
+  function tick() {
+    var now  = new Date();
+    var opts = {hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true,timeZone:userTZ};
+    var pts  = Intl.DateTimeFormat('en-US',opts).formatToParts(now);
+    var get  = function(t){return(pts.find(function(p){return p.type===t;})||{}).value||'--';};
+    var ap   = (pts.find(function(p){return p.type==='dayperiod'||p.type==='dayPeriod';})||{}).value||'';
+    var timeStr = get('hour')+':'+get('minute')+':'+get('second')+' '+ap;
+    var tz = (Intl.DateTimeFormat('en-US',{timeZoneName:'short',timeZone:userTZ}).formatToParts(now).find(function(p){return p.type==='timeZoneName';})||{}).value||'';
+    var el = document.getElementById('val-time-bar');
+    var tz_el = document.getElementById('val-tz-bar');
+    if(el) el.textContent = timeStr;
+    if(tz_el) tz_el.textContent = tz;
+  }
+  tick(); setInterval(tick, 1000);
+
+  function degToCompass(d) {
+    return ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d/22.5)%16];
+  }
+
+  // Weather
+  function fetchWeather(lt, ln) {
+    if(Date.now()-lastTemp < 5*60*1000) return; lastTemp=Date.now();
+    fetch('https://api.open-meteo.com/v1/forecast?latitude='+lt+'&longitude='+ln+'&current_weather=true&temperature_unit=fahrenheit')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var f = Math.round(d.current_weather.temperature);
+        var c = Math.round((f-32)*5/9);
+        document.getElementById('val-temp').textContent   = f+'°F';
+        document.getElementById('val-temp-c').textContent = c+' °C';
+        document.getElementById('dot-temp').style.background = '#f5c518';
+      }).catch(function(){document.getElementById('dot-temp').style.background='#f87171';});
+  }
+
+  // Elevation
+  function fetchElev(lt, ln) {
+    if(Date.now()-lastElev < 15000) return; lastElev=Date.now();
+    fetch('https://api.open-meteo.com/v1/elevation?latitude='+lt+'&longitude='+ln)
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.elevation&&d.elevation[0]!=null){
+          var ft = Math.round(d.elevation[0]*3.28084);
+          document.getElementById('val-elev').textContent = ft.toLocaleString();
+          document.getElementById('dot-elev').style.background = '#f5c518';
+        }
+      }).catch(function(){});
+  }
+
+  // Geocode
+  function fetchGeo(lt, ln) {
+    if(Date.now()-lastGeo < 30000) return; lastGeo=Date.now();
+    fetch('https://nominatim.openstreetmap.org/reverse?lat='+lt+'&lon='+ln+'&format=json')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var a = d.address;
+        window._street = a.road||a.pedestrian||a.county||'';
+        var city  = a.city||a.town||a.village||a.county||'';
+        var state = a.state_code||a.state||'';
+        window._city = city+(city&&state?', ':'')+state;
+        updateLoc();
+      }).catch(function(){});
+  }
+
+  function updateLoc() {
+    var se = document.getElementById('val-street');
+    var ce = document.getElementById('val-city');
+    if(se) se.textContent = isMoving ? (window._street||'Locating...') : 'Somewhere USA 🇺🇸';
+    if(ce) ce.textContent = window._city||'--';
+  }
+
+  // Timezone
+  function fetchTZ(lt, ln) {
+    if(Date.now()-lastTz < 5*60*1000) return; lastTz=Date.now();
+    fetch('https://timeapi.io/api/TimeZone/coordinate?latitude='+lt+'&longitude='+ln)
+      .then(function(r){return r.json();})
+      .then(function(d){if(d.timeZone) userTZ=d.timeZone;})
+      .catch(function(){});
+  }
+
+  // GPS
+  function onPos(pos) {
+    var c   = pos.coords;
+    var lat = c.latitude, lon = c.longitude;
+    var mph = (c.speed!=null&&c.speed>=0) ? Math.round(c.speed*2.23694) : 0;
+    isMoving = mph >= 2;
+
+    fetchWeather(lat, lon);
+    fetchGeo(lat, lon);
+    fetchTZ(lat, lon);
+    updateLoc();
+  }
+
+  function onErr(e) {
+    var msg = e?(e.code===1?'Location denied':e.code===2?'GPS unavailable':'GPS timeout'):'GPS Error';
+    document.getElementById('val-street').textContent = msg;
+    document.getElementById('val-city').textContent   = 'Check settings';
+  }
+
+  // Auto-start GPS on load
+  window.addEventListener('load', function() {
+    if(navigator.geolocation) {
+      navigator.geolocation.watchPosition(onPos, onErr, {
+        enableHighAccuracy:true, timeout:30000, maximumAge:0
+      });
+    } else { onErr(null); }
+  });
+</script>
+</body>
+</html>
